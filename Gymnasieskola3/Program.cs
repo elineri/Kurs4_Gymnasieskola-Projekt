@@ -14,60 +14,38 @@ namespace Gymnasieskola3
             {
                 Console.WriteLine("  Välj vad du vill göra\n");
                 Console.Write("" +
-                    "  [1] Personal\n" +
-                    "  [2] Elever\n" +
-                    "  [3] Elever i en viss klass\n" +
-                    "  [4] Alla betyg från senaste månaden\n" +
-                    "  [5] Kurser och snittbetyg\n" +
-                    "  [6] Lägg till ny elev\n" +
-                    "  [7] Lägg till ny personal\n");
+                    "  [1] Elever\n" +
+                    "  [2] Elever i en viss klass\n" +
+                    "  [3] Lägg till ny personal\n" +
+                    "  [4] Se antal lärare per avdelning\n" +
+                    "  [5] Elevinformation\n" +
+                    "  [6] Lista på aktiva kurser\n");
                 Console.Write("\n  Val: ");
                 int menuOption = Int32.Parse(Console.ReadLine());
 
                 switch (menuOption)
                 {
-                    case 1: // Show all staff
-                        Console.Clear();
-                        Console.WriteLine("  *** Personal ***\n");
-                        Console.WriteLine("  Vill du se all personal eller bara lärare?\n" +
-                            "  [1] All personal\n" +
-                            "  [2] Bara lärare");
-                        Console.Write("  Val: ");
-                        int optionStaff = Int32.Parse(Console.ReadLine());
-
-                        Console.Clear();
-                        if (optionStaff == 1)
-                        {
-                            Console.WriteLine("  Se SQL query för att se personal");
-                        }
-                        else if (optionStaff == 2)
-                        {
-                            Console.WriteLine("  Se SQL query för att se lärare");
-                        }
-                        break;
-                    case 2: // Show all students
+                    case 1: // Show all students
                         Console.Clear();
                         GetStudents();
                         break;
-                    case 3: // Show students in a specific class
+                    case 2: // Show students in a specific class
                         Console.Clear();
                         GetStudentsClass();
                         break;
-                    case 4: // Show all grades from last month
-                        Console.Clear();
-                        Console.WriteLine("  Se SQL query för att se betyg");
-                        break;
-                    case 5: // Show all courses and average grades
-                        Console.Clear();
-                        Console.WriteLine("  Se SQL query för att se betyg");
-                        break;
-                    case 6: // Add a new student
-                        Console.Clear();
-                        Console.WriteLine("  Se SQL query för att lägga till en ny elev");
-                        break;
-                    case 7: // Add new staff
+                    case 3: // Add new staff
                         Console.Clear();
                         AddNewStaff();
+                        break;
+                    case 4: // Show amount of teachers in a department
+                        Console.Clear();
+                        StaffDep();
+                        break;
+                    case 5: // Student information
+                        Console.Clear();
+                        break;
+                    case 6: // Active courses
+                        Console.Clear();
                         break;
                     default:
                         break;
@@ -219,6 +197,35 @@ namespace Gymnasieskola3
             Console.WriteLine($"  Ny personal har lagts till:\n" +
                 $"  Namn:\t\t {fName} {lName}\n" +
                 $"  Befattning:\t {role}");
+        }
+        
+        static void StaffDep()
+        {
+            using GymnasieskolaDbContext Context = new GymnasieskolaDbContext();
+
+            Console.WriteLine("  *** Avdelningar ***\n");
+            Console.Write("" +
+            "  [1] Stab\n" +
+            "  [2] Elevstöd\n" +
+            "  [3] Lärare grundämnen\n" +
+            "  [4] Lärare praktiska/estetiska ämnen\n" +
+            "  [5] Underhåll och service\n");
+            Console.Write("\n  Val: ");
+            int option = Int32.Parse(Console.ReadLine());
+
+            var staff = from TblAvdelningPersonal in Context.TblAvdelningPersonal
+                        join TblPersonal in Context.TblPersonal
+                        on TblAvdelningPersonal.FpersonalId equals TblPersonal.PersonalId
+                        join TblAvdelningar in Context.TblAvdelningar
+                        on TblAvdelningPersonal.FavdelningId equals TblAvdelningar.AvdelningId
+                        where TblAvdelningPersonal.FavdelningId == option
+                        orderby TblPersonal.Pförnamn
+                        select new { TblPersonal.Pförnamn, TblPersonal.Pefternamn, TblPersonal.Befattning };
+
+            foreach (var item in staff)
+            {
+                Console.WriteLine($"  {item.Pförnamn} {item.Pefternamn}\t\t {item.Befattning}");
+            }
         }
     }
 }
