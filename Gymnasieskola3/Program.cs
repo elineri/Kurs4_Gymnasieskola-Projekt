@@ -43,6 +43,7 @@ namespace Gymnasieskola3
                         break;
                     case 5: // Student information
                         Console.Clear();
+                        StudentInfo();
                         break;
                     case 6: // Active courses
                         Console.Clear();
@@ -220,11 +221,31 @@ namespace Gymnasieskola3
                         on TblAvdelningPersonal.FavdelningId equals TblAvdelningar.AvdelningId
                         where TblAvdelningPersonal.FavdelningId == option
                         orderby TblPersonal.Pförnamn
-                        select new { TblPersonal.Pförnamn, TblPersonal.Pefternamn, TblPersonal.Befattning };
+                        select new { TblPersonal.Pförnamn, TblPersonal.Pefternamn, TblPersonal.Befattning};
 
             foreach (var item in staff)
             {
-                Console.WriteLine($"  {item.Pförnamn} {item.Pefternamn}\t\t {item.Befattning}");
+                Console.WriteLine($"  Namn:\t {item.Pförnamn} {item.Pefternamn}" +
+                    $"  Befattning:\t {item.Befattning}");
+            }
+        }
+
+        static void StudentInfo()
+        {
+            using GymnasieskolaDbContext Context = new GymnasieskolaDbContext();
+
+            var students = from TblElever in Context.TblElever
+                           join TblKlasser in Context.TblKlasser
+                           on TblElever.FklassId equals TblKlasser.KlassId
+                           orderby TblElever.Eförnamn
+                           select new { TblElever.Eförnamn, TblElever.Eefternamn, TblKlasser.Klassnamn, TblElever.Personnummer};
+
+            foreach (var item in students)
+            {
+                Console.WriteLine($"  Namn:\t\t {item.Eförnamn} {item.Eefternamn}\n" +
+                    $"  Personnummer:\t {item.Personnummer}\n" +
+                    $"  Klass:\t {item.Klassnamn}");
+                Console.WriteLine();
             }
         }
     }
