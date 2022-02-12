@@ -27,6 +27,7 @@ namespace Gymnasieskola3.Models
         public virtual DbSet<TblKursbetyg> TblKursbetyg { get; set; }
         public virtual DbSet<TblKurser> TblKurser { get; set; }
         public virtual DbSet<TblPersonal> TblPersonal { get; set; }
+        public virtual DbSet<TblKursSchema> TblKursSchema { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -210,6 +211,20 @@ namespace Gymnasieskola3.Models
                 entity.Property(e => e.Slutdatum).HasColumnType("date");
 
                 entity.Property(e => e.Startdatum).HasColumnType("date");
+            });
+
+            modelBuilder.Entity<TblKursSchema>(entity =>
+            {
+                entity.HasKey(e => e.KursSchemaId)
+                    .HasName("PK_KursSchema");
+
+                entity.ToTable("tblKursSchema");
+
+                entity.Property(e => e.FkursId).HasColumnName("FKursId");
+
+                entity.Property(e => e.KursSlutdatum).HasColumnType("date");
+
+                entity.Property(e => e.KursStartdatum).HasColumnType("date");
             });
 
             OnModelCreatingPartial(modelBuilder);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Gymnasieskola3.Models;
 
@@ -17,9 +18,10 @@ namespace Gymnasieskola3
                     "  [1] Elever\n" +
                     "  [2] Elever i en viss klass\n" +
                     "  [3] Lägg till ny personal\n" +
-                    "  [4] Se antal lärare per avdelning\n" +
-                    "  [5] Elevinformation\n" +
-                    "  [6] Lista på aktiva kurser\n");
+                    "  [4] Avdelningar och personal\n" +
+                    "  [5] Antal personer per avdelning\n" +
+                    "  [6] Elevinformation\n" +
+                    "  [7] Lista på aktiva kurser\n");
                 Console.Write("\n  Val: ");
                 int menuOption = Int32.Parse(Console.ReadLine());
 
@@ -37,16 +39,21 @@ namespace Gymnasieskola3
                         Console.Clear();
                         AddNewStaff();
                         break;
-                    case 4: // Show amount of teachers in a department
+                    case 4: // Show teachers in a department
                         Console.Clear();
                         StaffDep();
                         break;
-                    case 5: // Student information
+                    case 5: // Show amount of teachers in a department
+                        Console.Clear();
+                        AmountStaffDep();
+                        break;
+                    case 6: // Student information
                         Console.Clear();
                         StudentInfo();
                         break;
-                    case 6: // Active courses
+                    case 7: // Active courses
                         Console.Clear();
+                        ActiveCourses();
                         break;
                     default:
                         break;
@@ -64,13 +71,13 @@ namespace Gymnasieskola3
             Console.WriteLine("  Vill du se elever sorterade på förnamn eller efternamn?");
             Console.WriteLine("  [1] Förnamn\n" +
                 "  [2] Efternamn");
-            Console.Write("  Val: ");
+            Console.Write("\n  Val: ");
             int option1 = Int32.Parse(Console.ReadLine());
 
             Console.WriteLine("\n  Vill du se i stigande eller fallande ordning?");
             Console.WriteLine("  [1] Stigande\n" +
                 "  [2] Fallande");
-            Console.Write("  Val: ");
+            Console.Write("\n  Val: ");
             int option2 = Int32.Parse(Console.ReadLine());
 
             Console.Clear();
@@ -152,7 +159,7 @@ namespace Gymnasieskola3
                 Console.WriteLine("  " + item.Klassnamn);
             }
 
-            Console.Write("\n  Välj klass:");
+            Console.Write("\n  Välj klass: ");
             int option = Int32.Parse(Console.ReadLine());
 
             var students = from TblElever in Context.TblElever
@@ -221,18 +228,21 @@ namespace Gymnasieskola3
                         on TblAvdelningPersonal.FavdelningId equals TblAvdelningar.AvdelningId
                         where TblAvdelningPersonal.FavdelningId == option
                         orderby TblPersonal.Pförnamn
-                        select new { TblPersonal.Pförnamn, TblPersonal.Pefternamn, TblPersonal.Befattning};
+                        select new { TblPersonal.Pförnamn, TblPersonal.Pefternamn, TblPersonal.Befattning };
 
             foreach (var item in staff)
             {
-                Console.WriteLine($"  Namn:\t {item.Pförnamn} {item.Pefternamn}" +
+                Console.WriteLine($"  Namn:\t\t {item.Pförnamn} {item.Pefternamn}\n" +
                     $"  Befattning:\t {item.Befattning}");
+                Console.WriteLine();
             }
         }
 
         static void StudentInfo()
         {
             using GymnasieskolaDbContext Context = new GymnasieskolaDbContext();
+
+            Console.WriteLine("  *** Elevinformation ***\n");
 
             var students = from TblElever in Context.TblElever
                            join TblKlasser in Context.TblKlasser
@@ -243,9 +253,62 @@ namespace Gymnasieskola3
             foreach (var item in students)
             {
                 Console.WriteLine($"  Namn:\t\t {item.Eförnamn} {item.Eefternamn}\n" +
-                    $"  Personnummer:\t {item.Personnummer}\n" +
+                    $"  Personnummer:\t {item.Personnummer.ToString("00000000-0000")}\n" +
                     $"  Klass:\t {item.Klassnamn}");
                 Console.WriteLine();
+            }
+        }
+
+        static void ActiveCourses()
+        {
+            using GymnasieskolaDbContext Context = new GymnasieskolaDbContext();
+
+            Console.WriteLine("  *** Aktiva kurser ***\n");
+
+            var courses = from TblKursSchema in Context.TblKursSchema
+                          join TblKurser in Context.TblKurser
+                          on TblKursSchema.FkursId equals TblKurser.KursId
+                          where TblKursSchema.KursSlutdatum >= DateTime.Now
+                          where TblKursSchema.KursStartdatum <= DateTime.Now
+                          orderby TblKurser.Kursnamn
+                          select new { TblKurser.Kursnamn, TblKursSchema.KursStartdatum, TblKursSchema.KursSlutdatum };
+
+            foreach (var item in courses)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.WriteLine($"  {item.Kursnamn}");
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine($"  Startdatum:\t {item.KursStartdatum.ToString().Substring(0, 10)}\n" +
+                    $"  Slutdatum:\t {item.KursSlutdatum.ToString().Substring(0,10)}");
+                Console.WriteLine();
+            }
+        }
+
+        static void AmountStaffDep()
+        {
+            using GymnasieskolaDbContext Context = new GymnasieskolaDbContext();
+
+            var staff = from TblAvdelningPersonal in Context.TblAvdelningPersonal
+                        group TblAvdelningPersonal by TblAvdelningPersonal.FavdelningId into grp
+                        select new { key = grp.Key, cnt = grp.Count() };
+
+            List<string> depList = new List<string>();
+            depList.Add("Stab");
+            depList.Add("Elevstöd");
+            depList.Add("Lärare grundämnen");
+            depList.Add("Lärare estetiska/praktiska ämnen");
+            depList.Add("Underhåll och service");
+
+            Console.WriteLine("  ***Antal personer per avdelning***");
+            int i = 0;
+            
+            foreach (var pers in staff)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.WriteLine($"\n  {depList[i]}");
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine($"  {pers.cnt} personer");
+                i++;
             }
         }
     }
